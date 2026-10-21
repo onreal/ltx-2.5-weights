@@ -9,5 +9,4 @@ import runpod
 
 from worker_comfyui_handler import handler
 
-if __name__ == "__main__":
-    runpod.serverless.start({"handler": handler})
+runpod.serverless.start({"handler": handler})

@@ -40,3 +40,6 @@ COPY extra_model_paths.yaml /comfyui/extra_model_paths.yaml
 # Our handler.py starts the base image's handler, which is moved aside first.
 RUN mv /handler.py /worker_comfyui_handler.py
 COPY handler.py /handler.py
+
+# The base image's start script: starts ComfyUI, then runs /handler.py.
+CMD ["/start.sh"]
