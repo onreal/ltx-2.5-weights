@@ -4,8 +4,10 @@ Image-to-video with Lightricks LTX-2.5 (distilled, INT8) on RunPod Serverless, f
 
 - Image: built by RunPod from this repo's `Dockerfile`: `runpod/worker-comfyui:5.11.0-base`
   with ComfyUI replaced by `v0.42.3` (the base ships a ComfyUI without the LTX-2.5 nodes).
-- Weights: not in the image. They live on the network volume `upiosi-1` (EU-FR-1) under
-  `models/`, read through `extra_model_paths.yaml`.
+- Weights: not in the image. They live on two identical network volumes, `ltx-2.5-eu-ro-1`
+  (EU-RO-1) and `ltx-2.5-eu-cz-1` (EU-CZ-1), under `models/`, read through
+  `extra_model_paths.yaml`. Both are attached to the endpoint, so it can run in either
+  datacenter. EU datacenters only.
 - Workflow: `workflows/ltx25_i2v_api.json`, ComfyUI API format, the official
   `video_ltx2_5_i2v` template flattened with the prompt enhancer removed. Validated against
   ComfyUI v0.42.3.
@@ -17,10 +19,8 @@ Image-to-video with Lightricks LTX-2.5 (distilled, INT8) on RunPod Serverless, f
   diffusion_models/ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors   21.5 GB
   text_encoders/gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors           15.4 GB
   vae/ltx-2.5-video-vae-bf16.safetensors                                               1.5 GB
-  vae/ltx-2.5-video-vae-conv-bf16.safetensors                                          1.5 GB (unused)
   vae/ltx-2.5-audio-vae-bf16.safetensors                                               0.4 GB
   latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors        1.0 GB
-  model_patches/ltx-2.5-duration-head-bf16.safetensors                                  0 GB (unused)
 ```
 
 ## Endpoint settings
@@ -28,8 +28,8 @@ Image-to-video with Lightricks LTX-2.5 (distilled, INT8) on RunPod Serverless, f
 | Setting | Value |
 |---|---|
 | Source | GitHub: this repo, branch `main`, Dockerfile `Dockerfile` |
-| GPU | H100 SXM (80 GB), then H200 SXM as fallback |
-| Network volume | `upiosi-1`, which pins the endpoint to EU-FR-1 |
+| GPU | RTX PRO 6000 (96 GB), RTX PRO 6000 WK (96 GB), A100 SXM (80 GB) |
+| Network volumes | `ltx-2.5-eu-ro-1` + `ltx-2.5-eu-cz-1`, which limits the endpoint to EU-RO-1 / EU-CZ-1 |
 | Active workers | 0 |
 | Max workers | 2 |
 | Idle timeout | 60 s |
