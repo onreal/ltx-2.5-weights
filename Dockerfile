@@ -6,7 +6,7 @@
 #
 # The model weights are NOT in this image. They live on the network volume,
 # mounted at /runpod-volume, under models/ (see extra_model_paths.yaml).
-FROM runpod/worker-comfyui:5.11.0-base
+FROM runpod/worker-comfyui:5.10.0-base
 
 ARG COMFYUI_VERSION=v0.42.3
 

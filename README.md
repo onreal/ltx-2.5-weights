@@ -2,7 +2,7 @@
 
 Image-to-video with Lightricks LTX-2.5 (distilled, INT8) on RunPod Serverless, for PipeHub clips.
 
-- Image: built by RunPod from this repo's `Dockerfile`: `runpod/worker-comfyui:5.11.0-base`
+- Image: built by RunPod from this repo's `Dockerfile`: `runpod/worker-comfyui:5.10.0-base`
   with ComfyUI replaced by `v0.42.3` (the base ships a ComfyUI without the LTX-2.5 nodes).
 - Weights: not in the image. They live on two identical network volumes, `ltx-2.5-eu-ro-1`
   (EU-RO-1) and `ltx-2.5-eu-cz-1` (EU-CZ-1), under `models/`, read through
