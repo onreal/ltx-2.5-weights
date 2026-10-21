@@ -36,3 +36,7 @@ RUN uv pip install torch==2.11.0 torchvision==0.26.0 torchaudio==2.11.0 \
 RUN cd /comfyui && timeout 300 python main.py --quick-test-for-ci --cpu
 
 COPY extra_model_paths.yaml /comfyui/extra_model_paths.yaml
+
+# Our handler.py starts the base image's handler, which is moved aside first.
+RUN mv /handler.py /worker_comfyui_handler.py
+COPY handler.py /handler.py
