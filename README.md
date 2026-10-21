@@ -41,30 +41,40 @@ Image-to-video with Lightricks LTX-2.5 (distilled, INT8) on RunPod Serverless, f
 
 ## Request
 
-`POST https://api.runpod.ai/v2/{endpoint_id}/run`
+`POST https://api.runpod.ai/v2/{endpoint_id}/run`, then poll `GET /status/{job_id}`.
+
+### Clip request (what PipeHub sends)
 
 ```json
-{
-  "input": {
-    "workflow": { "...": "workflows/ltx25_i2v_api.json, with the values below filled in" },
-    "images": [{ "name": "input.png", "image": "<base64 PNG/JPEG>" }]
-  }
-}
+{ "input": { "prompt": "…", "image": "<base64 PNG/JPEG>", "seconds": 7.3 } }
 ```
 
-Values to set per clip:
-
-| Node | Input | Meaning |
+| Field | Required | Meaning |
 |---|---|---|
-| `20` | `text` | the prompt |
-| `30` | `width`, `height` | **half** the output size. Stage 1 renders at half size and the latent upsampler doubles it. Use multiples of 32, so the output is a multiple of 64. |
-| `30`, `32` | `length`, `frames_number` | frame count, `8n + 1` (121 = 5 s at 24 fps) |
-| `22`, `32`, `72` | `frame_rate`, `frame_rate`, `fps` | frames per second (24) |
-| `40`, `60` | `noise_seed` | seeds for stage 1 and stage 2 |
+| `prompt` | yes | what happens in the clip |
+| `image` | yes | the starting frame, base64 (a data URI prefix is allowed) |
+| `seconds` | no (5) | rounded up to the next 8n + 1 frame count, at most 481 frames (20 s at 24 fps) |
+| `audio` | no (false) | keep LTX's own soundtrack; PipeHub mixes its own, so it is off by default |
+| `long_edge`, `fps`, `seed`, `negative_prompt` | no | default: env `LTX_LONG_EDGE` (1152), `LTX_FPS` (24), random seed, the template's negative prompt |
 
-Then poll `GET /status/{job_id}`. The MP4 comes back in `output.images[0].data` as base64, or
-as a URL when the S3 upload variables are set. The clip carries LTX's own audio track: discard
-it, since PipeHub mixes its own narration, songs and effects.
+`handler.py` builds `workflows/ltx25_i2v_api.json` from it: the output keeps the image's aspect ratio
+with its longer edge at `long_edge` (multiples of 64; stage 1 renders at half size and the latent
+upsampler doubles it).
 
-`delayTime` (queue plus cold start) and `executionTime` (generation) in the status response
-are what each clip is billed for, together with the 60 s idle timeout.
+The result is the worker-comfyui output plus what was rendered:
+
+```json
+{ "images": [{ "filename": "clip_00001_.mp4", "type": "base64", "data": "…" }],
+  "pipehub": { "width": 1152, "height": 768, "frames": 177, "fps": 24, "seconds": 7.3333, "audio": false } }
+```
+
+### Raw ComfyUI job
+
+`{ "input": { "workflow": { … }, "images": [{ "name": "input.png", "image": "<base64>" }] } }` is
+passed unchanged to the base worker-comfyui handler.
+
+### Cost
+
+`delayTime` (queue plus cold start) and `executionTime` (generation) in the status response are
+what each clip is billed for, plus the endpoint's idle timeout. First measurement (2026-10-22, RTX
+PRO 6000, 10 s at 1152×768 with audio): 216 s execution, about $0.21.
