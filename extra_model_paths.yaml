@@ -1,0 +1,17 @@
+# Models are read from the RunPod network volume, mounted at /runpod-volume on
+# serverless workers (/workspace on pods). Layout on the volume:
+#
+#   models/diffusion_models/ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors
+#   models/text_encoders/gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors
+#   models/vae/ltx-2.5-video-vae-bf16.safetensors
+#   models/vae/ltx-2.5-audio-vae-bf16.safetensors
+#   models/latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors
+#   models/model_patches/ltx-2.5-duration-head-bf16.safetensors
+runpod_worker_comfy:
+  base_path: /runpod-volume
+  diffusion_models: models/diffusion_models/
+  text_encoders: models/text_encoders/
+  vae: models/vae/
+  latent_upscale_models: models/latent_upscale_models/
+  model_patches: models/model_patches/
+  loras: models/loras/

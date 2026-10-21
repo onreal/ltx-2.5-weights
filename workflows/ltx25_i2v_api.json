@@ -1,0 +1,43 @@
+{
+  "1": { "class_type": "LoadImage", "inputs": { "image": "input.png" } },
+  "2": { "class_type": "ResizeImageMaskNode", "inputs": { "input": ["1", 0], "resize_type": "scale longer dimension", "resize_type.longer_size": 1536, "scale_method": "lanczos" } },
+  "3": { "class_type": "LTXVPreprocess", "inputs": { "image": ["2", 0], "img_compression": 18 } },
+
+  "10": { "class_type": "UNETLoader", "inputs": { "unet_name": "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors", "weight_dtype": "default" } },
+  "11": { "class_type": "CLIPLoader", "inputs": { "clip_name": "gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors", "type": "ltxv", "device": "default" } },
+  "12": { "class_type": "VAELoader", "inputs": { "vae_name": "ltx-2.5-video-vae-bf16.safetensors" } },
+  "13": { "class_type": "VAELoader", "inputs": { "vae_name": "ltx-2.5-audio-vae-bf16.safetensors" } },
+  "14": { "class_type": "LatentUpscaleModelLoader", "inputs": { "model_name": "ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors" } },
+
+  "20": { "class_type": "CLIPTextEncode", "inputs": { "clip": ["11", 0], "text": "A slow push-in on the scene. No text, no black frames." } },
+  "21": { "class_type": "CLIPTextEncode", "inputs": { "clip": ["11", 0], "text": "pc game, console game, video game, cartoon, childish, ugly" } },
+  "22": { "class_type": "LTXVConditioning", "inputs": { "positive": ["20", 0], "negative": ["21", 0], "frame_rate": 24 } },
+
+  "30": { "class_type": "EmptyLTXVLatentVideo", "inputs": { "width": 640, "height": 352, "length": 121, "batch_size": 1 } },
+  "31": { "class_type": "LTXVImgToVideoInplace", "inputs": { "vae": ["12", 0], "image": ["3", 0], "latent": ["30", 0], "strength": 0.7, "bypass": false } },
+  "32": { "class_type": "LTXVEmptyLatentAudio", "inputs": { "frames_number": 121, "frame_rate": 24, "batch_size": 1, "audio_vae": ["13", 0] } },
+  "33": { "class_type": "LTXVConcatAVLatent", "inputs": { "video_latent": ["31", 0], "audio_latent": ["32", 0] } },
+
+  "40": { "class_type": "RandomNoise", "inputs": { "noise_seed": 875362541677469 } },
+  "41": { "class_type": "LTXVDualCFGGuider", "inputs": { "model": ["10", 0], "positive": ["22", 0], "negative": ["22", 1], "video_cfg": 1, "audio_cfg": 1 } },
+  "42": { "class_type": "KSamplerSelect", "inputs": { "sampler_name": "euler_ancestral" } },
+  "43": { "class_type": "ManualSigmas", "inputs": { "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0" } },
+  "44": { "class_type": "SamplerCustomAdvanced", "inputs": { "noise": ["40", 0], "guider": ["41", 0], "sampler": ["42", 0], "sigmas": ["43", 0], "latent_image": ["33", 0] } },
+  "45": { "class_type": "LTXVSeparateAVLatent", "inputs": { "av_latent": ["44", 0] } },
+
+  "50": { "class_type": "LTXVLatentUpsampler", "inputs": { "samples": ["45", 0], "upscale_model": ["14", 0], "vae": ["12", 0] } },
+  "51": { "class_type": "LTXVImgToVideoInplace", "inputs": { "vae": ["12", 0], "image": ["3", 0], "latent": ["50", 0], "strength": 1, "bypass": false } },
+  "52": { "class_type": "LTXVConcatAVLatent", "inputs": { "video_latent": ["51", 0], "audio_latent": ["45", 1] } },
+
+  "60": { "class_type": "RandomNoise", "inputs": { "noise_seed": 42 } },
+  "61": { "class_type": "LTXVDualCFGGuider", "inputs": { "model": ["10", 0], "positive": ["22", 0], "negative": ["22", 1], "video_cfg": 1, "audio_cfg": 1 } },
+  "62": { "class_type": "KSamplerSelect", "inputs": { "sampler_name": "euler_ancestral" } },
+  "63": { "class_type": "ManualSigmas", "inputs": { "sigmas": "0.85, 0.7250, 0.4219, 0.0" } },
+  "64": { "class_type": "SamplerCustomAdvanced", "inputs": { "noise": ["60", 0], "guider": ["61", 0], "sampler": ["62", 0], "sigmas": ["63", 0], "latent_image": ["52", 0] } },
+  "65": { "class_type": "LTXVSeparateAVLatent", "inputs": { "av_latent": ["64", 0] } },
+
+  "70": { "class_type": "VAEDecodeTiled", "inputs": { "samples": ["65", 0], "vae": ["12", 0], "tile_size": 512, "overlap": 64, "temporal_size": 64, "temporal_overlap": 16 } },
+  "71": { "class_type": "LTXVAudioVAEDecode", "inputs": { "samples": ["65", 1], "audio_vae": ["13", 0] } },
+  "72": { "class_type": "CreateVideo", "inputs": { "images": ["70", 0], "audio": ["71", 0], "fps": 24, "bit_depth": 8 } },
+  "73": { "class_type": "SaveVideo", "inputs": { "video": ["72", 0], "filename_prefix": "ltx25/clip", "format": "mp4", "format.codec": "h264" } }
+}
